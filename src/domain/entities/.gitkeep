@@ -1,0 +1,1 @@
+// Entidades del dominio (ej. Usuario, Vacante, Postulacion) con logica e invariantes de negocio puros, sin dependencias externas.

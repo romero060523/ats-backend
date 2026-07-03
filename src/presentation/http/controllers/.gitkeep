@@ -1,0 +1,1 @@
+// Controladores HTTP que traducen requests/responses de Express hacia/desde los casos de uso.

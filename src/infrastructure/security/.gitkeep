@@ -1,0 +1,1 @@
+// Implementaciones concretas de seguridad (ej. bcrypt hasher, JWT provider) que satisfacen los puertos de servicios.
