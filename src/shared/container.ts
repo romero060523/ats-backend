@@ -42,7 +42,7 @@ const historialRepository = new PrismaHistorialRepository(prisma);
 // Servicios de infraestructura.
 const transactionManager = new PrismaTransactionManager(prisma);
 const passwordHasher = new BcryptPasswordHasher();
-const tokenService = new JwtTokenService();
+export const tokenService = new JwtTokenService();
 
 // Casos de uso — auth/
 export const registrarPostulante = new RegistrarPostulante(usuarioRepository, passwordHasher);
