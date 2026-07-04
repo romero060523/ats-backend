@@ -1,1 +1,103 @@
 // Prisma schema: define aqui los modelos de datos y el datasource/generator del ATS.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RolUsuario {
+  ADMINISTRADOR
+  RECLUTADOR
+  POSTULANTE
+}
+
+enum EstadoVacante {
+  BORRADOR
+  PUBLICADA
+  CERRADA
+}
+
+enum EstadoPostulacion {
+  RECIBIDA
+  EN_REVISION
+  ENTREVISTA
+  ACEPTADA
+  RECHAZADA
+}
+
+model Usuario {
+  id              String        @id @default(uuid()) @db.Uuid
+  nombre          String
+  email           String        @unique
+  passwordHash    String
+  rol             RolUsuario    @default(POSTULANTE)
+  activo          Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  vacantesCreadas Vacante[]                    @relation("VacantesPorReclutador")
+  postulaciones   Postulacion[]                @relation("PostulacionesPorPostulante")
+  cambiosEstado   HistorialEstadoPostulacion[] @relation("CambiosPorUsuario")
+
+  @@map("usuarios")
+}
+
+model Vacante {
+  id            String        @id @default(uuid()) @db.Uuid
+  titulo        String
+  slug          String        @unique
+  descripcion   String        @db.Text
+  requisitos    String        @db.Text
+  ubicacion     String
+  area          String
+  salarioMin    Decimal?      @db.Decimal(10, 2)
+  salarioMax    Decimal?      @db.Decimal(10, 2)
+  estado        EstadoVacante @default(BORRADOR)
+  reclutadorId  String        @db.Uuid
+  reclutador    Usuario       @relation("VacantesPorReclutador", fields: [reclutadorId], references: [id])
+  postulaciones Postulacion[]
+  deletedAt     DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([estado])
+  @@index([reclutadorId])
+  @@map("vacantes")
+}
+
+model Postulacion {
+  id                 String                       @id @default(uuid()) @db.Uuid
+  vacanteId          String                       @db.Uuid
+  postulanteId       String                       @db.Uuid
+  vacante            Vacante                      @relation(fields: [vacanteId], references: [id])
+  postulante         Usuario                      @relation("PostulacionesPorPostulante", fields: [postulanteId], references: [id])
+  estado             EstadoPostulacion            @default(RECIBIDA)
+  mensajePostulacion String?                      @db.Text
+  historial          HistorialEstadoPostulacion[]
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+
+  @@unique([vacanteId, postulanteId])
+  @@index([postulanteId])
+  @@index([vacanteId])
+  @@map("postulaciones")
+}
+
+model HistorialEstadoPostulacion {
+  id             String             @id @default(uuid()) @db.Uuid
+  postulacionId  String             @db.Uuid
+  postulacion    Postulacion        @relation(fields: [postulacionId], references: [id])
+  estadoAnterior EstadoPostulacion?
+  estadoNuevo    EstadoPostulacion
+  cambiadoPorId  String             @db.Uuid
+  cambiadoPor    Usuario            @relation("CambiosPorUsuario", fields: [cambiadoPorId], references: [id])
+  comentario     String?            @db.Text
+  createdAt      DateTime           @default(now())
+
+  @@index([postulacionId])
+  @@map("historial_estado_postulacion")
+}
