@@ -7,7 +7,7 @@ import { RecursoNoEncontradoError } from "../../../domain/errors/RecursoNoEncont
 import { HistorialEstadoPostulacion } from "../../../domain/entities/HistorialEstadoPostulacion";
 import { PostulacionRepository } from "../../ports/repositories/PostulacionRepository";
 import { VacanteRepository } from "../../ports/repositories/VacanteRepository";
-import { HistorialRepository } from "../../ports/repositories/HistorialRepository";
+import { TransactionManager } from "../../ports/services/TransactionManager";
 
 export interface CrearPostulacionInput {
   vacanteId: string;
@@ -19,7 +19,7 @@ export class CrearPostulacion {
   constructor(
     private readonly postulacionRepository: PostulacionRepository,
     private readonly vacanteRepository: VacanteRepository,
-    private readonly historialRepository: HistorialRepository
+    private readonly transactionManager: TransactionManager
   ) {}
 
   async ejecutar(input: CrearPostulacionInput): Promise<Postulacion> {
@@ -52,20 +52,22 @@ export class CrearPostulacion {
       updatedAt: ahora,
     });
 
-    const postulacionCreada = await this.postulacionRepository.crear(postulacion);
+    return this.transactionManager.ejecutar(async (uow) => {
+      const postulacionCreada = await uow.postulacionRepository.crear(postulacion);
 
-    const historial = new HistorialEstadoPostulacion({
-      id: randomUUID(),
-      postulacionId: postulacionCreada.id,
-      estadoAnterior: null,
-      estadoNuevo: EstadoPostulacionEnum.RECIBIDA,
-      cambiadoPorId: input.postulanteId,
-      comentario: null,
-      createdAt: ahora,
+      const historial = new HistorialEstadoPostulacion({
+        id: randomUUID(),
+        postulacionId: postulacionCreada.id,
+        estadoAnterior: null,
+        estadoNuevo: EstadoPostulacionEnum.RECIBIDA,
+        cambiadoPorId: input.postulanteId,
+        comentario: null,
+        createdAt: ahora,
+      });
+
+      await uow.historialRepository.crear(historial);
+
+      return postulacionCreada;
     });
-
-    await this.historialRepository.crear(historial);
-
-    return postulacionCreada;
   }
 }
