@@ -1,5 +1,6 @@
 import { Usuario } from "@domain/entities/Usuario";
 import { Postulacion } from "@domain/entities/Postulacion";
+import { PostulacionConVacanteResumen } from "@application/ports/repositories/PostulacionRepository";
 
 export function serializarUsuario(u: Usuario) {
   return {
@@ -22,5 +23,16 @@ export function serializarPostulacion(p: Postulacion) {
     mensajePostulacion: p.mensajePostulacion,
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
+  };
+}
+
+export function serializarPostulacionConVacante(item: PostulacionConVacanteResumen) {
+  return {
+    ...serializarPostulacion(item.postulacion),
+    vacante: {
+      titulo: item.vacanteTitulo,
+      slug: item.vacanteSlug,
+      ubicacion: item.vacanteUbicacion,
+    },
   };
 }

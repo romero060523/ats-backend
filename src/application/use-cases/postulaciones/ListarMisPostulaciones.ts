@@ -1,5 +1,7 @@
-import { Postulacion } from "../../../domain/entities/Postulacion";
-import { PostulacionRepository } from "../../ports/repositories/PostulacionRepository";
+import {
+  PostulacionRepository,
+  PostulacionConVacanteResumen,
+} from "../../ports/repositories/PostulacionRepository";
 
 export interface ListarMisPostulacionesInput {
   postulanteId: string;
@@ -12,8 +14,8 @@ export class ListarMisPostulaciones {
 
   async ejecutar(
     input: ListarMisPostulacionesInput
-  ): Promise<{ items: Postulacion[]; total: number }> {
-    return this.postulacionRepository.listarPorPostulante(
+  ): Promise<{ items: PostulacionConVacanteResumen[]; total: number }> {
+    return this.postulacionRepository.listarPorPostulanteConVacante(
       input.postulanteId,
       input.pagina,
       input.limite

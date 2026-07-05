@@ -6,7 +6,7 @@ import {
   obtenerHistorialPostulacion,
   obtenerUsuarioActual,
 } from "@shared/container";
-import { serializarPostulacion } from "../dto/serializers";
+import { serializarPostulacion, serializarPostulacionConVacante } from "../dto/serializers";
 
 function parsePaginacion(req: Request): { pagina: number; limite: number } {
   const q = req.parsedQuery as { pagina?: number; limite?: number } | undefined;
@@ -40,7 +40,7 @@ export async function listarMias(req: Request, res: Response, next: NextFunction
 
     res.status(200).json({
       success: true,
-      data: resultado.items.map(serializarPostulacion),
+      data: resultado.items.map(serializarPostulacionConVacante),
       meta: {
         total: resultado.total,
         pagina,

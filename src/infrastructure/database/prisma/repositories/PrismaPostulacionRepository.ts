@@ -1,5 +1,8 @@
 import { PrismaClientOrTx } from "../client";
-import { PostulacionRepository } from "../../../../application/ports/repositories/PostulacionRepository";
+import {
+  PostulacionRepository,
+  PostulacionConVacanteResumen,
+} from "../../../../application/ports/repositories/PostulacionRepository";
 import { Postulacion } from "../../../../domain/entities/Postulacion";
 import { EstadoPostulacionEnum } from "../../../../domain/value-objects/EstadoPostulacion";
 import { PostulacionMapper } from "../mappers/PostulacionMapper";
@@ -56,6 +59,36 @@ export class PrismaPostulacionRepository implements PostulacionRepository {
     ]);
 
     return { items: registros.map((registro) => PostulacionMapper.toDomain(registro)), total };
+  }
+
+  async listarPorPostulanteConVacante(
+    postulanteId: string,
+    pagina: number,
+    limite: number
+  ): Promise<{ items: PostulacionConVacanteResumen[]; total: number }> {
+    const where = { postulanteId };
+
+    const [registros, total] = await Promise.all([
+      this.prisma.postulacion.findMany({
+        where,
+        skip: (pagina - 1) * limite,
+        take: limite,
+        include: {
+          vacante: { select: { titulo: true, slug: true, ubicacion: true } },
+        },
+      }),
+      this.prisma.postulacion.count({ where }),
+    ]);
+
+    return {
+      items: registros.map((registro) => ({
+        postulacion: PostulacionMapper.toDomain(registro),
+        vacanteTitulo: registro.vacante.titulo,
+        vacanteSlug: registro.vacante.slug,
+        vacanteUbicacion: registro.vacante.ubicacion,
+      })),
+      total,
+    };
   }
 
   async listarPorVacante(
